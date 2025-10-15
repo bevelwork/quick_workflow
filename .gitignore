@@ -1,0 +1,15 @@
+# Binaries
+quick_workflow
+quick_workflow-*
+
+# State files
+state.json
+*.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
