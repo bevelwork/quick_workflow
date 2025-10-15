@@ -20,10 +20,17 @@ type GitHubClient struct {
 func NewGitHubClient() (*GitHubClient, error) {
 	ctx := context.Background()
 	
-	// Get token from environment
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		return nil, fmt.Errorf("GITHUB_TOKEN environment variable not set")
+	// Try to get token from stored auth config first
+	authConfig, err := loadAuthConfig()
+	var token string
+	if err == nil && authConfig.GitHubToken != "" {
+		token = authConfig.GitHubToken
+	} else {
+		// Fall back to environment variable
+		token = os.Getenv("GITHUB_TOKEN")
+		if token == "" {
+			return nil, fmt.Errorf("GitHub authentication required. Run 'quick_workflow login github' to authenticate")
+		}
 	}
 
 	// Create OAuth2 client

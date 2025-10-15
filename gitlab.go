@@ -19,14 +19,30 @@ type GitLabClient struct {
 func NewGitLabClient() (*GitLabClient, error) {
 	ctx := context.Background()
 	
-	// Get token from environment
-	token := os.Getenv("GITLAB_TOKEN")
-	if token == "" {
-		return nil, fmt.Errorf("GITLAB_TOKEN environment variable not set")
+	// Try to get token from stored auth config first
+	authConfig, err := loadAuthConfig()
+	var token string
+	var host string
+	if err == nil && authConfig.GitLabToken != "" {
+		token = authConfig.GitLabToken
+		host = authConfig.GitLabHost
+		if host == "" {
+			host = "gitlab.com"
+		}
+	} else {
+		// Fall back to environment variable
+		token = os.Getenv("GITLAB_TOKEN")
+		host = os.Getenv("GITLAB_HOST")
+		if host == "" {
+			host = "gitlab.com"
+		}
+		if token == "" {
+			return nil, fmt.Errorf("GitLab authentication required. Run 'quick_workflow login gitlab' to authenticate")
+		}
 	}
 
-	// Create GitLab client
-	client, err := gitlab.NewClient(token)
+	// Create GitLab client with host
+	client, err := gitlab.NewClient(token, gitlab.WithBaseURL(fmt.Sprintf("https://%s/api/v4", host)))
 	if err != nil {
 		return nil, err
 	}

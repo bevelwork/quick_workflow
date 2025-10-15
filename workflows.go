@@ -288,16 +288,21 @@ func showWorkflowDetails(ctx context.Context, config *Config, run WorkflowRun) {
 
 // getJobsForRun retrieves jobs for a specific workflow run
 func getJobsForRun(ctx context.Context, run WorkflowRun) ([]Job, error) {
-	// Find the project
-	var project *Project
-	for _, p := range []Project{} { // This would be from config.Projects
-		if p.Name == run.Project {
-			project = &p
-			break
-		}
+	// Parse the project name to extract owner/repo and platform
+	parts := strings.Split(run.Project, "/")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid project format: %s (expected owner/repo)", run.Project)
 	}
-	if project == nil {
-		return nil, fmt.Errorf("project not found: %s", run.Project)
+	
+	owner := parts[0]
+	repo := parts[1]
+	
+	// Create a temporary project for API calls
+	project := Project{
+		Name:     run.Project,
+		Owner:    owner,
+		Repo:     repo,
+		Platform: run.Platform,
 	}
 
 	switch project.Platform {

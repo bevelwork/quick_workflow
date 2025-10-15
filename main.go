@@ -149,6 +149,12 @@ func main() {
 			return
 		}
 		removeProject(config, remainingArgs[0])
+	case "login":
+		handleLogin(remainingArgs)
+	case "logout":
+		handleLogout(remainingArgs)
+	case "auth":
+		showAuthStatus()
 	case "help":
 		showHelp()
 	default:
@@ -182,6 +188,9 @@ func showHelp() {
 	fmt.Println("  list           List historical workflow runs")
 	fmt.Println("  projects       List tracked projects")
 	fmt.Println("  remove <name>  Remove a project from tracking")
+	fmt.Println("  login <platform> [host]  Authenticate with GitHub or GitLab")
+	fmt.Println("  logout <platform>        Remove authentication")
+	fmt.Println("  auth           Show authentication status")
 	fmt.Println("  help           Show this help message")
 	fmt.Println()
 	fmt.Printf("%s\n", qc.Colorize("Examples:", qc.ColorYellow))
@@ -191,11 +200,13 @@ func showHelp() {
 	fmt.Println("  quick_workflow start                     # Start a new workflow")
 	fmt.Println("  quick_workflow list                      # List recent workflow runs")
 	fmt.Println("  quick_workflow projects                  # List tracked projects")
+	fmt.Println("  quick_workflow login github              # Authenticate with GitHub")
+	fmt.Println("  quick_workflow login gitlab gitlab.com  # Authenticate with GitLab")
+	fmt.Println("  quick_workflow auth                      # Show authentication status")
 	fmt.Println()
-	fmt.Printf("%s\n", qc.Colorize("Configuration:", qc.ColorYellow))
-	fmt.Println("  State file: ~/.config/quick_workflow/state.json")
-	fmt.Println("  Set GITHUB_TOKEN for GitHub API access")
-	fmt.Println("  Set GITLAB_TOKEN for GitLab API access")
+	fmt.Printf("%s\n", qc.Colorize("Authentication:", qc.ColorYellow))
+	fmt.Println("  Use 'quick_workflow login <platform>' to authenticate via web browser")
+	fmt.Println("  No need to manually set GITHUB_TOKEN or GITLAB_TOKEN environment variables")
 }
 
 // addCurrentProject adds the current directory as a project
@@ -478,5 +489,54 @@ func colorPlatform(platform string) string {
 	default:
 		return qc.ColorWhite
 	}
+}
+
+// handleLogin handles the login command
+func handleLogin(args []string) {
+	if len(args) == 0 {
+		fmt.Printf("%s Usage: quick_workflow login <platform> [host]\n", qc.Colorize("Error:", qc.ColorRed))
+		fmt.Println("  Platform: github, gitlab")
+		fmt.Println("  Host: (optional) for GitLab, specify host like gitlab.com")
+		return
+	}
+
+	platform := args[0]
+	host := ""
+	if len(args) > 1 {
+		host = args[1]
+	}
+
+	switch platform {
+	case "github":
+		if err := loginGitHub(); err != nil {
+			fmt.Printf("%s %v\n", qc.Colorize("Error:", qc.ColorRed), err)
+			return
+		}
+	case "gitlab":
+		if err := loginGitLab(host); err != nil {
+			fmt.Printf("%s %v\n", qc.Colorize("Error:", qc.ColorRed), err)
+			return
+		}
+	default:
+		fmt.Printf("%s Invalid platform: %s\n", qc.Colorize("Error:", qc.ColorRed), platform)
+		fmt.Println("Supported platforms: github, gitlab")
+	}
+}
+
+// handleLogout handles the logout command
+func handleLogout(args []string) {
+	if len(args) == 0 {
+		fmt.Printf("%s Usage: quick_workflow logout <platform>\n", qc.Colorize("Error:", qc.ColorRed))
+		fmt.Println("  Platform: github, gitlab, all")
+		return
+	}
+
+	platform := args[0]
+	if err := logout(platform); err != nil {
+		fmt.Printf("%s %v\n", qc.Colorize("Error:", qc.ColorRed), err)
+		return
+	}
+
+	fmt.Printf("%s Logged out from %s\n", qc.Colorize("Success:", qc.ColorGreen), platform)
 }
 

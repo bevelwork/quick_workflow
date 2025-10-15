@@ -120,18 +120,52 @@ quick_workflow start
 - Trigger new pipelines
 - Monitor status and conclusions
 
-## API Token Requirements
+## Authentication
 
-### GitHub
-Your `GITHUB_TOKEN` needs the following permissions:
+Quick Workflow supports easy authentication with both GitHub and GitLab using personal access tokens.
+
+### Quick Setup
+
+```bash
+# Authenticate with GitHub
+quick_workflow login github
+
+# Authenticate with GitLab
+quick_workflow login gitlab
+
+# Check authentication status
+quick_workflow auth
+
+# Logout from a platform
+quick_workflow logout github
+```
+
+### Manual Token Setup (Alternative)
+
+If you prefer to set tokens manually:
+
+**GitHub:**
+```bash
+export GITHUB_TOKEN=your_github_token_here
+```
+
+**GitLab:**
+```bash
+export GITLAB_TOKEN=your_gitlab_token_here
+export GITLAB_HOST=gitlab.com  # or your GitLab instance
+```
+
+### Token Requirements
+
+**GitHub Token Scopes:**
 - `repo` (for private repositories)
-- `actions:read` (to read workflow runs)
-- `actions:write` (to trigger workflows)
+- `read:org` (to read organization information)
+- `read:user` (to read user information)
+- `read:packages` (to read packages)
 
-### GitLab
-Your `GITLAB_TOKEN` needs the following scopes:
-- `read_api` (to read pipeline information)
-- `api` (to trigger pipelines)
+**GitLab Token Scopes:**
+- `api` (to read pipeline information and jobs)
+- `read_repository` (to read repository information)
 
 ## Troubleshooting
 
