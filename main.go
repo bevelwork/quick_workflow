@@ -367,6 +367,8 @@ func getGitRemoteURL(path string) (string, error) {
 // parseRemoteURL parses a git remote URL to extract platform, owner, and repo
 func parseRemoteURL(url string) (platform, owner, repo string, err error) {
 	// Handle different URL formats
+	
+	// GitHub HTTPS URLs
 	if strings.HasPrefix(url, "https://github.com/") {
 		platform = "github"
 		parts := strings.Split(strings.TrimPrefix(url, "https://github.com/"), "/")
@@ -375,7 +377,10 @@ func parseRemoteURL(url string) (platform, owner, repo string, err error) {
 			repo = strings.TrimSuffix(parts[1], ".git")
 			return
 		}
-	} else if strings.HasPrefix(url, "git@github.com:") {
+	}
+	
+	// GitHub SSH URLs (git@github.com:owner/repo.git)
+	if strings.HasPrefix(url, "git@github.com:") {
 		platform = "github"
 		parts := strings.Split(strings.TrimPrefix(url, "git@github.com:"), "/")
 		if len(parts) >= 2 {
@@ -383,18 +388,78 @@ func parseRemoteURL(url string) (platform, owner, repo string, err error) {
 			repo = strings.TrimSuffix(parts[1], ".git")
 			return
 		}
-	} else if strings.Contains(url, "gitlab") {
-		platform = "gitlab"
-		// Parse GitLab URL
-		// This is a simplified parser - in practice, you'd want more robust parsing
-		parts := strings.Split(url, "/")
+	}
+	
+	// GitHub SSH URLs (ssh://git@github.com/owner/repo.git)
+	if strings.HasPrefix(url, "ssh://git@github.com/") {
+		platform = "github"
+		parts := strings.Split(strings.TrimPrefix(url, "ssh://git@github.com/"), "/")
 		if len(parts) >= 2 {
-			// Find the owner/repo part
-			for i, part := range parts {
-				if strings.Contains(part, "gitlab") && i+2 < len(parts) {
-					owner = parts[i+1]
-					repo = strings.TrimSuffix(parts[i+2], ".git")
-					return
+			owner = parts[0]
+			repo = strings.TrimSuffix(parts[1], ".git")
+			return
+		}
+	}
+	
+	// GitLab HTTPS URLs
+	if strings.Contains(url, "gitlab.com") && strings.HasPrefix(url, "https://") {
+		platform = "gitlab"
+		// Extract owner/repo from https://gitlab.com/owner/repo.git
+		parts := strings.Split(strings.TrimPrefix(url, "https://gitlab.com/"), "/")
+		if len(parts) >= 2 {
+			owner = parts[0]
+			repo = strings.TrimSuffix(parts[1], ".git")
+			return
+		}
+	}
+	
+	// GitLab SSH URLs (git@gitlab.com:owner/repo.git)
+	if strings.HasPrefix(url, "git@gitlab.com:") {
+		platform = "gitlab"
+		parts := strings.Split(strings.TrimPrefix(url, "git@gitlab.com:"), "/")
+		if len(parts) >= 2 {
+			owner = parts[0]
+			repo = strings.TrimSuffix(parts[1], ".git")
+			return
+		}
+	}
+	
+	// GitLab SSH URLs (ssh://git@gitlab.com/owner/repo.git)
+	if strings.HasPrefix(url, "ssh://git@gitlab.com/") {
+		platform = "gitlab"
+		parts := strings.Split(strings.TrimPrefix(url, "ssh://git@gitlab.com/"), "/")
+		if len(parts) >= 2 {
+			owner = parts[0]
+			repo = strings.TrimSuffix(parts[1], ".git")
+			return
+		}
+	}
+	
+	// Custom GitLab instances (any URL containing gitlab)
+	if strings.Contains(url, "gitlab") {
+		platform = "gitlab"
+		// Try to extract from various GitLab URL formats
+		// Look for patterns like https://git.example.com/owner/repo or ssh://git@git.example.com/owner/repo
+		if strings.Contains(url, "://") {
+			// Split by :// and take the part after it
+			urlParts := strings.Split(url, "://")
+			if len(urlParts) >= 2 {
+				pathPart := urlParts[1]
+				// Remove any leading git@ and trailing .git
+				pathPart = strings.TrimPrefix(pathPart, "git@")
+				pathPart = strings.TrimSuffix(pathPart, ".git")
+				
+				// Split by / to get owner/repo
+				parts := strings.Split(pathPart, "/")
+				if len(parts) >= 2 {
+					// Find the last two parts that look like owner/repo
+					for i := len(parts) - 2; i >= 0; i-- {
+						if len(parts[i]) > 0 && len(parts[i+1]) > 0 {
+							owner = parts[i]
+							repo = parts[i+1]
+							return
+						}
+					}
 				}
 			}
 		}

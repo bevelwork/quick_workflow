@@ -164,11 +164,14 @@ The tool supports these remote URL formats:
 **GitHub:**
 - `https://github.com/owner/repo.git`
 - `git@github.com:owner/repo.git`
+- `ssh://git@github.com/owner/repo.git`
 
 **GitLab:**
 - `https://gitlab.com/owner/repo.git`
 - `git@gitlab.com:owner/repo.git`
+- `ssh://git@gitlab.com/owner/repo.git`
 - Custom GitLab instances (e.g., `https://git.example.com/owner/repo.git`)
+- Custom GitLab SSH URLs (e.g., `ssh://git@git.example.com/owner/repo.git`)
 
 ## Development
 
